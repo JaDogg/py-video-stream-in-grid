@@ -1,2 +1,6 @@
-*~
-videos/
+.idea/
+__pycache__
+*.pyc
+dist
+build
+*.spec

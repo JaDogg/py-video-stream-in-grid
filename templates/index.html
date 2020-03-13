@@ -1,12 +1,31 @@
 <html>
+  <head>
+    <title>Simple Streamer</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+      function stream(id, mime) {
+        var src_ = "{{video_route}}/" + id;
+        var source_ = '<source src="' + src_ +'" type="' + mime +'"></source>';
+        var html_ = '<video width="800" height="400" controls></video>' ;
+        console.log(html_);
+        $("#divVideo").html(html_);
+      }
+    </script>
+  </head>
   <h1>
-    Home page! Time: {{ time }}
+    Simple Streamer: {{time}}
   </h1>
-  <video
-     src="{{ video }}"
+  <ul>
+    {% for vid in videos %}
+    <li><a href="#" onclick="stream({{vid[0]}}, '{{vid[2]}}')">{{vid[0]}} - {{vid[1]}}</a></li>
+    {% endfor %}
+  </ul>
+  <div id="divVideo">
+    <video
+     src="{{video_route}}/{{videos[0][0]}}"
      width="800"
      height="400"
      controls
-     >
-  </video>
+     ></video>
+  </div>
 </html>
