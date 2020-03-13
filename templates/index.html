@@ -5,8 +5,8 @@
     <script>
       function stream(id, mime) {
         var src_ = "{{video_route}}/" + id;
-        var source_ = '<source src="' + src_ +'" type="' + mime +'"></source>';
-        var html_ = '<video width="800" height="400" controls></video>' ;
+        var source_ = '<source src="' + src_ +'" type="' + mime +'" />';
+        var html_ = '<video width="800" height="400" controls>' + source_ + '</video>' ;
         console.log(html_);
         $("#divVideo").html(html_);
       }
@@ -22,10 +22,11 @@
   </ul>
   <div id="divVideo">
     <video
-     src="{{video_route}}/{{videos[0][0]}}"
      width="800"
      height="400"
      controls
-     ></video>
+     >
+      <source src="{{video_route}}/{{videos[0][0]}}" type="{{videos[0][2]}}" />
+    </video>
   </div>
 </html>

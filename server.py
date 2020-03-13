@@ -16,6 +16,7 @@ from flask import request
 
 LOG = logging.getLogger(__name__)
 
+# FIXME: properly load from py-installer bundle
 if getattr(sys, 'frozen', False):
     template_folder = os.path.join(sys._MEIPASS, 'templates')
     app = Flask(__name__, template_folder=template_folder)
@@ -140,10 +141,4 @@ def video(vid):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     HOST = "0.0.0.0"
-    # http_server = HTTPServer(WSGIContainer(app))
-    # http_server.bind(8080)
-    # http_server.start(1)
-    # IOLoop.instance().start()
-
-    # Standalone
-    app.run(host=HOST, port=8080, debug=False, threaded=False)
+    app.run(host=HOST, port=8089, debug=False, threaded=False)
