@@ -8,58 +8,62 @@ import sys
 from collections import namedtuple
 from datetime import datetime
 
-from natsort import natsorted
-
 from flask import Flask
 from flask import Response, render_template
 from flask import request
+from natsort import natsorted
 
-LOG = logging.getLogger(__name__)
 
-# FIXME: properly load from py-installer bundle
-if getattr(sys, 'frozen', False):
-    template_folder = os.path.join(sys._MEIPASS, 'templates')
-    app = Flask(__name__, template_folder=template_folder)
-else:
+try:
+    _template_folder = os.path.join(sys._MEIPASS, "templates")
+    app = Flask(__name__, template_folder=_template_folder)
+    VIDEO_LOCATION = os.path.abspath(os.path.dirname(sys.executable))
+except AttributeError:
+    VIDEO_LOCATION = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
     app = Flask(__name__)
 
-ALLOWED = {".mp4", ".mkv"}
-VIDEO_LOCATION = r"D:\Downloads"
+ALLOWED = (".mp4", ".mkv")
 VIDEO_ROUTE = "/video"
+REGEX_RANGE = re.compile(r"bytes=(?P<start>\d+)-(?P<end>\d+)?")
 
 Video = namedtuple("Video", ("name", "ext", "mime", "path"))
 
 
 class Videos:
-    def __init__(self):
+    def __init__(self, videos_path=VIDEO_LOCATION, allowed=ALLOWED):
         self._map = {}
+        self._videos = []
+        self._location = videos_path
+        self._allowed = allowed
+        self._map_videos()
+
+    def _map_videos(self):
         i = 1
-
         videos = natsorted(list(self._possible()))
-
         for vid in videos:
             name, ext = os.path.splitext(vid)
             mime = mimetypes.guess_type(vid)[0]
             self._map[i] = Video(name, ext, mime, self._abs(vid))
             i += 1
-
-        self._videos = self._videos()
+        self._videos = self._sorted_videos()
 
     def _abs(self, path_):
-        return os.path.abspath(os.path.join(VIDEO_LOCATION, path_))
+        return os.path.abspath(os.path.join(self._location, path_))
 
     def _possible(self):
-        for possible_video in os.listdir(VIDEO_LOCATION):
+        for possible_video in os.listdir(self._location):
             if os.path.isdir(possible_video):
                 continue
 
             name, ext = os.path.splitext(possible_video)
-            if ext.lower() not in ALLOWED:
+            if ext.lower() not in self._allowed:
                 continue
             yield possible_video
 
-    def _videos(self):
-        return sorted([[k, v.name, v.mime] for k, v in self._map.items()], key=lambda x: x[0])
+    def _sorted_videos(self):
+        return sorted(
+            [[k, v.name, v.mime] for k, v in self._map.items()], key=lambda x: x[0]
+        )
 
     @property
     def videos(self):
@@ -77,17 +81,16 @@ BUFF_SIZE = 10 * MB
 
 @app.route("/")
 def home():
-    LOG.info("Rendering home page")
     response = render_template(
-        "index.html", time=str(datetime.now()),
+        "index.html",
+        time=str(datetime.now()),
         video_route=VIDEO_ROUTE,
-        videos=VIDEOS.videos
+        videos=VIDEOS.videos,
     )
     return response
 
 
 def partial_response(path, start, end=None):
-    LOG.info("Requested: %s, %s", start, end)
     file_size = os.path.getsize(path)
 
     # Determine (end, length)
@@ -100,35 +103,31 @@ def partial_response(path, start, end=None):
     # Read file
     with open(path, "rb") as fd:
         fd.seek(start)
-        bytes = fd.read(length)
-    assert len(bytes) == length
+        bytes_ = fd.read(length)
+    assert len(bytes_) == length
     mime = mimetypes.guess_type(path)[0]
-    LOG.info("File mime: %s", mime)
     response = Response(
-        bytes, 206, mimetype=mime, content_type=mime, direct_passthrough=True,
+        bytes_, 206, mimetype=mime, content_type=mime, direct_passthrough=True,
     )
     response.headers.add(
-        "Content-Range", "bytes {0}-{1}/{2}".format(start, end, file_size, ),
+        "Content-Range", "bytes {0}-{1}/{2}".format(start, end, file_size,),
     )
     response.headers.add("Accept-Ranges", "bytes")
-    LOG.info("Response: %s", response)
-    LOG.info("Response: %s", response.headers)
     return response
 
 
 def get_range(request_):
     range_ = request_.headers.get("Range")
-    LOG.info("Requested: %s", range_)
-    m = re.match("bytes=(?P<start>\d+)-(?P<end>\d+)?", range_)
-    if m:
-        start = m.group("start")
-        end = m.group("end")
+    matched = REGEX_RANGE.match(range_)
+    if matched:
+        start = matched.group("start")
+        end = matched.group("end")
         start = int(start)
         if end is not None:
             end = int(end)
         return start, end
-    else:
-        return 0, None
+
+    return 0, None
 
 
 @app.route(VIDEO_ROUTE + "/<vid>")
@@ -139,6 +138,10 @@ def video(vid):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    log = logging.getLogger("werkzeug")
+    log.setLevel(logging.ERROR)
     HOST = "0.0.0.0"
-    app.run(host=HOST, port=8089, debug=False, threaded=False)
+    PORT = 52165
+    if len(sys.argv) == 2:
+        PORT = int(sys.argv[1])
+    app.run(host=HOST, port=PORT, debug=False, threaded=True)
