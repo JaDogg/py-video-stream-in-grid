@@ -144,4 +144,5 @@ if __name__ == "__main__":
     PORT = 52165
     if len(sys.argv) == 2:
         PORT = int(sys.argv[1])
-    app.run(host=HOST, port=PORT, debug=False, threaded=True)
+    from waitress import serve
+    serve(app, host=HOST, port=PORT)
