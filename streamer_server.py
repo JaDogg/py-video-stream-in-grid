@@ -1,3 +1,4 @@
+import json
 import logging
 import mimetypes
 import os
@@ -63,7 +64,7 @@ class Videos:
 
     def _sorted_videos(self):
         return sorted(
-            [[k, v.name, v.mime] for k, v in self._map.items()], key=lambda x: x[0]
+            [[v.name, k, v.mime] for k, v in self._map.items()], key=lambda x: x[0]
         )
 
     @property
@@ -87,6 +88,18 @@ def home():
         time=str(datetime.now()),
         video_route=VIDEO_ROUTE,
         videos=VIDEOS.videos,
+    )
+    return response
+
+
+@app.route("/magic/")
+def magic_viewer():
+    response = render_template(
+        "magic.html",
+        time=str(datetime.now()),
+        video_route=VIDEO_ROUTE,
+        videos=VIDEOS.videos,
+        videos_json=json.dumps(VIDEOS.videos),
     )
     return response
 
@@ -145,4 +158,4 @@ if __name__ == "__main__":
         PORT = int(sys.argv[1])
     from waitress import serve
 
-    serve(app, host=HOST, port=PORT)
+    serve(app, host=HOST, port=PORT, threads=100)

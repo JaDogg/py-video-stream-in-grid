@@ -7,7 +7,6 @@
         var src_ = "{{video_route}}/" + id;
         var source_ = '<source src="' + src_ +'" type="' + mime +'" />';
         var html_ = '<video width="800" height="400" controls>' + source_ + '</video>' ;
-        console.log(html_);
         $("#divVideo").html(html_);
       }
     </script>
@@ -15,9 +14,10 @@
   <h1>
     Simple Streamer: {{time}}
   </h1>
+  <a href="/magic">View as a grid!</a>
   <ul>
     {% for vid in videos %}
-    <li><a href="#" onclick="stream({{vid[0]}}, '{{vid[2]}}')">{{vid[0]}} - {{vid[1]}}</a></li>
+    <li><a href="#" onclick="stream({{vid[1]}}, '{{vid[2]}}')">{{vid[1]}} - {{vid[0]}}</a></li>
     {% endfor %}
   </ul>
   <div id="divVideo">
@@ -26,7 +26,7 @@
      height="400"
      controls
      >
-      <source src="{{video_route}}/{{videos[0][0]}}" type="{{videos[0][2]}}" />
+      <source src="{{video_route}}/{{videos[0][1]}}" type="{{videos[0][2]}}" />
     </video>
   </div>
 </html>

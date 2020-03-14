@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <style>
+    @media (min-width: 576px) {
+      .card-columns {
+        column-count: 1;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .card-columns {
+        column-count: 2;
+      }
+    }
+
+    @media (min-width: 992px) {
+      .card-columns {
+        column-count: 3;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .card-columns {
+        column-count: 4;
+      }
+    }
+
+    .card-body {
+      padding: 0.5rem;
+    }
+
+    .card-header {
+      padding: 0.5rem;
+      font-size: 0.8em;
+    }
+
+    pre {
+      margin: 1em;
+      padding: 1em;
+      background-color: #eee;
+      white-space: pre-wrap;
+      font-size: smaller;
+    }
+
+    a {
+      color: #2e64fe;
+    }
+  </style>
+  <script>
+    var videoEntries = {{videos_json|safe}};
+    function withKeyword(keyword) {
+      return function (item) {
+        if (!keyword) return !!item[0];
+        return !!item[0] && item[0].toLowerCase().indexOf(keyword) !== -1;
+      };
+    }
+    function createVideo(vid, mime) {
+      const src_ = "{{video_route}}/" + vid;
+      const source_ = '<source src="' + src_ +'" type="' + mime +'" />';
+      const html_ = '<video width="100%" height="100%" controls preload="none">' + source_ + '</video>';
+      return html_;
+    }
+    function createVideoCard(name, vid, mime) {
+      return '<div class="card"><h5 class="card-header">' + name + '</h5><div class="card-body"><h5 class="card-title">' +
+        createVideo(vid, mime)
+        + '</div></div>';
+    }
+    function renderCardsTo(targetId) {
+      const defaultHtml = $("#default-content").html();
+      const search = $("#search").val().trim().toLowerCase();
+      const cards = videoEntries.filter(withKeyword(search)).map(x => createVideoCard(x[0], x[1], x[2]));
+      $(targetId).html(defaultHtml + cards.join(""));
+    }
+    function linkify(inputText) {
+      let replacedText, replacePattern1, replacePattern2, replacePattern3;
+      //URLs starting with http://, https://, or ftp://
+      replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+      replacedText = inputText.replace(
+        replacePattern1,
+        '<a href="$1" target="_blank">$1</a>'
+      );
+      //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+      replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+      replacedText = replacedText.replace(
+        replacePattern2,
+        '$1<a href="http://$2" target="_blank">$2</a>'
+      );
+      //Change email addresses to mailto:: links.
+      replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
+      replacedText = replacedText.replace(
+        replacePattern3,
+        '<a href="mailto:$1">$1</a>'
+      );
+      return replacedText;
+    }
+    function render() {
+      renderCardsTo("#cards-container");
+    }
+  </script>
+  <title>Simple Streamer 😎: {{time}}</title>
+</head>
+
+<body>
+  <!--
+    .########..########.########....###....##.....##.##.......########
+    .##.....##.##.......##.........##.##...##.....##.##..........##...
+    .##.....##.##.......##........##...##..##.....##.##..........##...
+    .##.....##.######...######...##.....##.##.....##.##..........##...
+    .##.....##.##.......##.......#########.##.....##.##..........##...
+    .##.....##.##.......##.......##.....##.##.....##.##..........##...
+    .########..########.##.......##.....##..#######..########....##...
+    Below div contains default content which will be added first to the final rendered cards
+  -->
+  <div id="default-content" style="display: none;">
+    <div class="card">
+      <h5 class="card-header">Welcome</h5>
+      <div class="card-body">
+Welcome to Streamer. Click for normal mode: <a href="/">Normal Mode</a>
+      </div>
+    </div>
+  </div>
+  <!-- ^^ Add your notes/etc in card divs above -->
+  <nav class="navbar navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">
+      Simple Streamer 😎: {{time}}
+    </a>
+    <form class="form-inline my-2 my-lg-0">
+      <input class="form-control mr-sm-2" type="search" placeholder="Search" id="search" />
+    </form>
+  </nav>
+  <div class="container-fluid">
+    <div class="card-columns" id="cards-container" style="margin-top: 10px;">
+      <!-- Don't add anything inside, we will replace it. -->
+    </div>
+  </div>
+  <script>
+    // self calling function to automatically call render()
+    // edit that function
+    (function () {
+      // On search - render again
+      let input = $("#search").keypress(function (event) {
+        if (event.keyCode === 13) {
+          event.preventDefault();
+          render();
+        }
+      });
+
+      // Convert all pre-tag https:// to links too
+      $("pre").each(function(index) {
+        $(this).html(linkify($(this).text()));
+      });
+
+      render();
+    })();
+  </script>
+</body>
+
+</html>
