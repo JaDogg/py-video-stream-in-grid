@@ -20,7 +20,7 @@ except AttributeError:
     VIDEO_LOCATION = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
     app = Flask(__name__)
 
-ALLOWED = (".mp4", ".mkv")
+ALLOWED = (".mp4", ".webm")
 VIDEO_ROUTE = "/video"
 REGEX_RANGE = re.compile(r"bytes=(?P<start>\d+)-(?P<end>\d+)?")
 
