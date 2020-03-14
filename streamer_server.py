@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import logging
 import mimetypes
 import os
@@ -39,26 +37,29 @@ class Videos:
 
     def _map_videos(self):
         i = 1
-        videos = natsorted(list(self._possible()))
-        for vid in videos:
-            name, ext = os.path.splitext(vid)
-            mime = mimetypes.guess_type(vid)[0]
-            self._map[i] = Video(name, ext, mime, self._abs(vid))
+        videos = natsorted(list(self._possible()), key=lambda x: x[1])
+        for path_name, full_path in videos:
+            _, ext = os.path.splitext(full_path)
+            mime = mimetypes.guess_type(full_path)[0]
+            self._map[i] = Video(path_name, ext, mime, full_path)
             i += 1
         self._videos = self._sorted_videos()
 
-    def _abs(self, path_):
-        return os.path.abspath(os.path.join(self._location, path_))
-
     def _possible(self):
-        for possible_video in os.listdir(self._location):
-            if os.path.isdir(possible_video):
-                continue
-
-            name, ext = os.path.splitext(possible_video)
+        for path_name, full_path in self._list_dir():
+            _, ext = os.path.splitext(full_path)
             if ext.lower() not in self._allowed:
                 continue
-            yield possible_video
+            yield path_name, full_path
+
+    def _list_dir(self):
+        for root, _, files in os.walk(self._location):
+            for f in files:
+                full_path = os.path.join(root, f)
+                if full_path.startswith(self._location):
+                    yield full_path[len(self._location) + 1 :], full_path
+                else:
+                    yield full_path, full_path
 
     def _sorted_videos(self):
         return sorted(
@@ -138,11 +139,10 @@ def video(vid):
 
 
 if __name__ == "__main__":
-    log = logging.getLogger("werkzeug")
-    log.setLevel(logging.ERROR)
     HOST = "0.0.0.0"
     PORT = 52165
     if len(sys.argv) == 2:
         PORT = int(sys.argv[1])
     from waitress import serve
+
     serve(app, host=HOST, port=PORT)
