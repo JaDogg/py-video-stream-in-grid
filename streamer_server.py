@@ -1,17 +1,18 @@
 import json
-import logging
 import mimetypes
 import os
 import re
 import sys
+import threading
+import time
 from collections import namedtuple
 from datetime import datetime
+import argparse
 
 from flask import Flask
 from flask import Response, render_template
 from flask import request
 from natsort import natsorted
-
 
 try:
     _template_folder = os.path.join(sys._MEIPASS, "templates")
@@ -58,13 +59,17 @@ class Videos:
             for f in files:
                 full_path = os.path.join(root, f)
                 if full_path.startswith(self._location):
-                    yield full_path[len(self._location) + 1 :], full_path
+                    yield full_path[len(self._location) + 1:], full_path
                 else:
                     yield full_path, full_path
 
+    @staticmethod
+    def _sexy_name(name: str) -> str:
+        return name.replace("\\", "/").replace("/", " ▶ ")
+
     def _sorted_videos(self):
         return sorted(
-            [[v.name, k, v.mime] for k, v in self._map.items()], key=lambda x: x[0]
+            [[v.name, k, v.mime, self._sexy_name(v.name)] for k, v in self._map.items()], key=lambda x: x[0]
         )
 
     @property
@@ -124,7 +129,7 @@ def partial_response(path, start, end=None):
         bytes_, 206, mimetype=mime, content_type=mime, direct_passthrough=True,
     )
     response.headers.add(
-        "Content-Range", "bytes {0}-{1}/{2}".format(start, end, file_size,),
+        "Content-Range", "bytes {0}-{1}/{2}".format(start, end, file_size, ),
     )
     response.headers.add("Accept-Ranges", "bytes")
     return response
@@ -151,11 +156,40 @@ def video(vid):
     return partial_response(path, start, end)
 
 
-if __name__ == "__main__":
-    HOST = "0.0.0.0"
-    PORT = 52165
-    if len(sys.argv) == 2:
-        PORT = int(sys.argv[1])
+def open_browser(hostname: str, port: int):
+    import webbrowser
+    webbrowser.open("http://{}:{}".format(hostname, port))
+
+
+def main():
+    global VIDEO_LOCATION
+    global VIDEOS
+    hostname = "127.0.0.1"
+    port = 52165
+    parser = argparse.ArgumentParser("streamer")
+    parser.add_argument("--host", default=hostname, help="Use 0.0.0.0 to broadcast")
+    parser.add_argument("--port", default=port, help="Port to use")
+    parser.add_argument("directory", default=VIDEO_LOCATION, help="Video location")
+
+    args = parser.parse_args()
+    hostname = args.host
+    port = int(args.port)
+    VIDEO_LOCATION = args.directory
+
+    VIDEOS = Videos(VIDEO_LOCATION)
+    if not VIDEOS.videos:
+        print("Did not find any videos in " + VIDEO_LOCATION)
+
+    def open_video():
+        time.sleep(0.3)
+        open_browser(hostname, port)
+
     from waitress import serve
 
-    serve(app, host=HOST, port=PORT, threads=100)
+    # Open browser window
+    threading.Thread(target=open_video, daemon=True).start()
+    serve(app, host=hostname, port=port, threads=100)
+
+
+if __name__ == "__main__":
+    main()

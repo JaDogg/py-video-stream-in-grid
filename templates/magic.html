@@ -55,7 +55,7 @@
     }
   </style>
   <script>
-    var videoEntries = {{videos_json|safe}};
+    let videoEntries = {{videos_json|safe}};
     function withKeyword(keyword) {
       return function (item) {
         if (!keyword) return !!item[0];
@@ -65,8 +65,7 @@
     function createVideo(vid, mime) {
       const src_ = "{{video_route}}/" + vid;
       const source_ = '<source src="' + src_ +'" type="' + mime +'" />';
-      const html_ = '<video width="100%" height="100%" controls preload="none">' + source_ + '</video>';
-      return html_;
+      return '<video width="100%" height="100%" controls preload="none">' + source_ + '</video>';
     }
     function createVideoCard(name, vid, mime) {
       return '<div class="card"><h5 class="card-header">' + name + '</h5><div class="card-body"><h5 class="card-title">' +
@@ -76,7 +75,7 @@
     function renderCardsTo(targetId) {
       const defaultHtml = $("#default-content").html();
       const search = $("#search").val().trim().toLowerCase();
-      const cards = videoEntries.filter(withKeyword(search)).map(x => createVideoCard(x[0], x[1], x[2]));
+      const cards = videoEntries.filter(withKeyword(search)).map(x => createVideoCard(x[3], x[1], x[2]));
       $(targetId).html(defaultHtml + cards.join(""));
     }
     function linkify(inputText) {

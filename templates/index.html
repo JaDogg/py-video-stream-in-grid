@@ -1,32 +1,75 @@
 <html>
-  <head>
+<head>
     <title>Simple Streamer</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script>
-      function stream(id, mime) {
-        var src_ = "{{video_route}}/" + id;
-        var source_ = '<source src="' + src_ +'" type="' + mime +'" />';
-        var html_ = '<video width="800" height="400" controls>' + source_ + '</video>' ;
-        $("#divVideo").html(html_);
-      }
+        function stream(id, mime) {
+            let src_ = "{{video_route}}/" + id;
+            let source_ = '<source src="' + src_ + '" type="' + mime + '" />';
+            let html_ = '<video width="800" height="400" controls>' + source_ + '</video>';
+            $("#divVideo").html(html_);
+        }
     </script>
-  </head>
-  <h1>
-    Simple Streamer: {{time}}
-  </h1>
-  <a href="/magic">View as a grid!</a>
-  <ul>
-    {% for vid in videos %}
-    <li><a href="#" onclick="stream({{vid[1]}}, '{{vid[2]}}')">{{vid[1]}} - {{vid[0]}}</a></li>
-    {% endfor %}
-  </ul>
-  <div id="divVideo">
-    <video
-     width="800"
-     height="400"
-     controls
-     >
-      <source src="{{video_route}}/{{videos[0][1]}}" type="{{videos[0][2]}}" />
-    </video>
-  </div>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        .column-l {
+            float: left;
+            width: 55%;
+            padding: 10px;
+            font-size: 0.7em;
+            height: calc(100vh - 100px);
+            background: #5da4ea;
+            overflow: scroll;
+        }
+
+        ul {
+            list-style-position: inside;
+            padding-left: 0;
+        }
+
+
+        .column-r {
+            float: left;
+            width: 45%;
+            padding: 10px;
+        }
+
+        /* Clear floats after the columns */
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .row {
+            top: 90px;
+            position: absolute;
+        }
+    </style>
+</head>
+<h1>
+    Simple Streamer: {{ time }}
+</h1>
+<a href="/magic">View as a grid!</a>
+<div class="row">
+    <div class="column-l">
+        <ul>
+            {% for vid in videos %}
+                <li><a href="#" onclick="stream({{ vid[1] }}, '{{ vid[2] }}')">{{ vid[3] }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="column-r" id="divVideo">
+        <video
+                width="800"
+                height="400"
+                controls
+        >
+            <source src="{{ video_route }}/{{ videos[0][1] }}" type="{{ videos[0][2] }}"/>
+        </video>
+    </div>
+</div>
 </html>
