@@ -68,7 +68,7 @@ class Videos:
         return name.replace("\\", "/").replace("/", " ▶ ")
 
     def _sorted_videos(self):
-        return sorted(
+        return natsorted(
             [[v.name, k, v.mime, self._sexy_name(v.name)] for k, v in self._map.items()], key=lambda x: x[0]
         )
 
