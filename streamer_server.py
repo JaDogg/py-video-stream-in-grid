@@ -169,7 +169,7 @@ def main():
     parser = argparse.ArgumentParser("streamer")
     parser.add_argument("--host", default=hostname, help="Use 0.0.0.0 to broadcast")
     parser.add_argument("--port", default=port, help="Port to use")
-    parser.add_argument("directory", default=VIDEO_LOCATION, help="Video location")
+    parser.add_argument("--directory", default=VIDEO_LOCATION, help="Video location")
 
     args = parser.parse_args()
     hostname = args.host
